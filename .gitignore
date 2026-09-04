@@ -1,0 +1,10 @@
+.venv
+__pycache__/
+*.pyc
+dataset
+dataset_split
+
+confusion_matrix.csv
+confusion_matrix.npy
+model.keras
+ptxas

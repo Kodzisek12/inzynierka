@@ -1,0 +1,25 @@
+{
+  "model": {
+    "parameters_total": 1620069,
+    "input_shape": [
+      32,
+      32,
+      32,
+      3
+    ],
+    "classes": 101
+  },
+  "training": {
+    "train_videos": 9280,
+    "validation_videos": 1296,
+    "batch_size": 8,
+    "epochs_completed": 7,
+    "best_epoch": 4,
+    "best_val_loss": 1.9350041151046753,
+    "best_val_accuracy": 0.6558641791343689,
+    "final_loss": 0.24733637273311615,
+    "final_accuracy": 0.9247844815254211,
+    "final_val_loss": 2.6521594524383545,
+    "final_val_accuracy": 0.6404321193695068
+  }
+}
