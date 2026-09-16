@@ -1,0 +1,10 @@
+Podsumowanie treningu
+Parametry modelu: 1,620,133
+Klasy: 101
+Wymiary wejścia: (32, 32, 32, 3)
+Filmy treningowe: 9280
+Filmy walidacyjne: 1296
+Batch size: 8
+Najlepsza epoka: 34
+Najlepsze val_accuracy: 0.7199
+Najlepsze val_loss: 1.7125

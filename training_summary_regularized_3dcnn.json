@@ -1,0 +1,34 @@
+{
+  "model": {
+    "parameters_total": 1620133,
+    "input_shape": [
+      32,
+      32,
+      32,
+      3
+    ],
+    "classes": 101,
+    "regularization": {
+      "augmentation": "horizontal flip, brightness ±0.08, contrast 0.85–1.15",
+      "spatial_dropout": [
+        0.1,
+        0.15
+      ],
+      "dropout": 0.45,
+      "l2_weight_decay": 0.0001
+    }
+  },
+  "training": {
+    "train_videos": 9280,
+    "validation_videos": 1296,
+    "batch_size": 8,
+    "epochs_completed": 35,
+    "best_epoch": 34,
+    "best_val_loss": 1.7125215530395508,
+    "best_val_accuracy": 0.7199074029922485,
+    "final_loss": 1.7058525085449219,
+    "final_accuracy": 0.7043103575706482,
+    "final_val_loss": 1.7395282983779907,
+    "final_val_accuracy": 0.7183641791343689
+  }
+}

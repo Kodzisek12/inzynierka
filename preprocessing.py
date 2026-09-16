@@ -12,11 +12,63 @@ import json
 import math
 import os
 import random
+import re
 import shutil
 from pathlib import Path
 
 
 SPLIT_NAMES = ("train", "val", "test")
+GROUP_PATTERN = re.compile(r"_g(?P<group>\d+)_c\d+$", re.IGNORECASE)
+
+
+def _group_key(video_path: Path) -> str:
+    """Zwraca identyfikator grupy UCF101 dla pojedynczego nagrania.
+
+    Filmy z tym samym ``gXX`` dla jednej klasy pochodzą z podobnego materiału
+    źródłowego. Muszą zawsze trafić do tego samego splitu.
+    """
+    match = GROUP_PATTERN.search(video_path.stem)
+    if match is None:
+        raise ValueError(
+            f"Nazwa pliku nie ma formatu UCF101 z identyfikatorem grupy: {video_path}"
+        )
+    return f"{video_path.parent.name}:g{match.group('group')}"
+
+
+def _split_grouped_videos(
+    videos: list[Path],
+    train_ratio: float,
+    val_ratio: float,
+    test_ratio: float,
+    rng: random.Random,
+) -> dict[str, list[Path]]:
+    """Dzieli filmy, nie rozdzielając żadnej grupy UCF101.
+
+    Grupy mają różne liczby klipów, dlatego wyniki nie muszą mieć dokładnie
+    docelowych proporcji co do jednego pliku. Wybór według największego
+    względnego niedoboru daje zbliżone proporcje bez przecieku danych.
+    """
+    grouped_videos: dict[str, list[Path]] = {}
+    for video in videos:
+        grouped_videos.setdefault(_group_key(video), []).append(video)
+
+    group_keys = sorted(grouped_videos)
+    rng.shuffle(group_keys)
+    ratios = {"train": train_ratio, "val": val_ratio, "test": test_ratio}
+    targets = {split: len(videos) * ratio for split, ratio in ratios.items()}
+    current_counts = {split: 0 for split in SPLIT_NAMES}
+    split_videos = {split: [] for split in SPLIT_NAMES}
+
+    for group_key in group_keys:
+        split = max(
+            SPLIT_NAMES,
+            key=lambda name: (targets[name] - current_counts[name]) / targets[name],
+        )
+        group = grouped_videos[group_key]
+        split_videos[split].extend(group)
+        current_counts[split] += len(group)
+
+    return split_videos
 
 
 def _add_file(source: Path, destination: Path, copy_files: bool) -> str:
@@ -49,8 +101,9 @@ def _prepare_output(input_dir: Path, output_dir: Path, clean: bool) -> None:
 
 
 def verify_split(output_dir: Path) -> dict[str, int]:
-    """Sprawdza, czy żaden film nie znajduje się w więcej niż jednym splicie."""
+    """Sprawdza brak duplikatów filmów i grup między splitami."""
     seen: dict[str, str] = {}
+    seen_groups: dict[str, str] = {}
     counts = {split: 0 for split in SPLIT_NAMES}
 
     for split in SPLIT_NAMES:
@@ -64,6 +117,13 @@ def verify_split(output_dir: Path) -> dict[str, int]:
                     f"Film {key} występuje zarówno w {seen[key]}, jak i w {split}."
                 )
             seen[key] = split
+            group_key = _group_key(video)
+            if group_key in seen_groups and seen_groups[group_key] != split:
+                raise ValueError(
+                    f"Grupa {group_key} występuje zarówno w "
+                    f"{seen_groups[group_key]}, jak i w {split}."
+                )
+            seen_groups[group_key] = split
             counts[split] += 1
 
     if not seen:
@@ -99,14 +159,9 @@ def split_dataset(
         if not videos:
             continue
 
-        rng.shuffle(videos)
-        train_end = int(len(videos) * train_ratio)
-        val_end = train_end + int(len(videos) * val_ratio)
-        groups = {
-            "train": videos[:train_end],
-            "val": videos[train_end:val_end],
-            "test": videos[val_end:],
-        }
+        groups = _split_grouped_videos(
+            videos, train_ratio, val_ratio, test_ratio, rng
+        )
         class_counts[class_dir.name] = {}
 
         for split, split_videos in groups.items():
@@ -120,6 +175,7 @@ def split_dataset(
         "source": str(input_dir),
         "seed": seed,
         "ratios": {"train": train_ratio, "val": val_ratio, "test": test_ratio},
+        "split_policy": "grouped_by_ucf101_source_group",
         "counts": counts,
         "class_counts": class_counts,
         "storage": storage_modes,

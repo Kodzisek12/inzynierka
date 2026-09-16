@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rozpoznawanie czynności w filmie</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <p class="eyebrow">UCF101 · model 3D CNN</p>
+        <h1>Rozpoznawanie czynności w filmie</h1>
+        <p class="intro">Wgraj własne wideo lub zarejestruj {{ frame_count }} klatki z kamery. Model pokaże pięć najbardziej prawdopodobnych czynności.</p>
+      </header>
+
+      <section class="card" aria-labelledby="upload-heading">
+        <h2 id="upload-heading">Własny plik wideo</h2>
+        <form id="upload-form">
+          <label class="file-picker" for="video-file">
+            <span>Wybierz film</span>
+            <input id="video-file" name="video" type="file" accept=".avi,.mp4,.mov,.mkv,.webm,video/*" required>
+          </label>
+          <p id="file-name" class="hint">Obsługiwane formaty: AVI, MP4, MOV, MKV, WebM. Maksymalnie 250 MB.</p>
+          <button type="submit">Rozpoznaj czynność</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="camera-heading">
+        <h2 id="camera-heading">Kamera</h2>
+        <p class="hint">Kamera nagrywa próbkę trwającą około 8 sekund. Przeglądarka poprosi o zezwolenie na jej użycie.</p>
+        <video id="camera-preview" autoplay playsinline muted></video>
+        <div class="camera-actions">
+          <button id="start-camera" type="button">Włącz kamerę</button>
+          <button id="capture-camera" type="button" disabled>Nagraj i rozpoznaj</button>
+          <button id="stop-camera" type="button" class="secondary" disabled>Wyłącz kamerę</button>
+        </div>
+        <p id="camera-status" class="hint" aria-live="polite"></p>
+      </section>
+
+      <section id="result" class="card result hidden" aria-live="polite">
+        <h2>Wynik</h2>
+        <p id="result-summary"></p>
+        <ol id="predictions"></ol>
+      </section>
+
+      <p id="error" class="error hidden" role="alert"></p>
+    </main>
+    <script>
+      window.APP_CONFIG = { frameCount: {{ frame_count }} };
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
